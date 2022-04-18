@@ -14,4 +14,4 @@ Navigate to the project folder and run the following commands:
 - `cmake --build cmake-build --target clean` (for a clean build if needed)
 - `cmake -S . -B cmake-build` to generate build files (only needed to be done once)
 - `cmake --build cmake-build` to build project (must be run every subsequent time when .cpp file has been edited)
-- `./start_scene` to run project
+- `./start_scene` to run the project
