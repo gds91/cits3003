@@ -7,7 +7,7 @@ properties of them to be changed, such as colour, shininess, and texture.
 
 ## Notes
 Only the files within the project's `src` folder have been included in
-this respository.  
+this respository. Other files such as the texture can be obtained from the zip files that were provided with the project.
 
 ## Building & Running
 Navigate to the project folder and run the following commands:
