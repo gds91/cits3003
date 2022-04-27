@@ -188,6 +188,21 @@ void loadMeshIfNotAlreadyLoaded(int meshNumber)
 
 //----------------------------------------------------------------------------
 
+// Part C
+static void adjustAmbientDiffuse(vec2 amb_diff)
+{
+    sceneObjs[toolObj].ambient += amb_diff[0];
+    sceneObjs[toolObj].diffuse += amb_diff[1];
+}
+
+static void adjustSpecularShine(vec2 spec_sh)
+{
+    sceneObjs[toolObj].specular += spec_sh[0];
+    sceneObjs[toolObj].shine += spec_sh[1];
+}
+
+//----------------------------------------------------------------------------
+
 void zoomIn()
 {
     viewDist = (viewDist < 0.0 ? viewDist : viewDist * 0.8) - 0.05;
@@ -455,7 +470,7 @@ void display(void)
     for (int i = 0; i < nObjects; i++)
     {
         SceneObject so = sceneObjs[i];
-
+        // part H modify
         vec3 rgb = so.rgb * lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0;
         glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb);
         CheckError();
@@ -567,13 +582,18 @@ static void materialMenu(int id)
     deactivateTool();
     if (currObject < 0)
         return;
-    if (id == 10)
+    else if (id == 10)
     {
         toolObj = currObject;
         setToolCallbacks(adjustRedGreen, mat2(1, 0, 0, 1),
                          adjustBlueBrightness, mat2(1, 0, 0, 1));
     }
-    // You'll need to fill in the remaining menu items here.
+    // Part C
+    else if (id == 20)
+    {
+        setToolCallbacks(adjustAmbientDiffuse, mat2(1, 0, 0, 1),
+                         adjustSpecularShine, mat2(1, 1, 0, 1));
+    }
     else
     {
         printf("Error in materialMenu\n");
@@ -618,7 +638,8 @@ static void makeMenu()
 
     int materialMenuId = glutCreateMenu(materialMenu);
     glutAddMenuEntry("R/G/B/All", 10);
-    glutAddMenuEntry("UNIMPLEMENTED: Ambient/Diffuse/Specular/Shine", 20);
+    // Part C
+    glutAddMenuEntry("Ambient/Diffuse/Specular/Shine", 20);
 
     int texMenuId = createArrayMenu(numTextures, textureMenuEntries, texMenu);
     int groundMenuId = createArrayMenu(numTextures, textureMenuEntries, groundMenu);
