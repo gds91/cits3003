@@ -79,6 +79,10 @@ int nObjects = 0;                  // How many objects are currenly in the scene
 int currObject = -1;               // The current object
 int toolObj = -1;                  // The object currently being modified
 
+// Shader selection. Set as 1 for parts A-F, 2 for parts G-H,
+// and any other number to enable selection in terminal
+int shaderNum = 2;
+
 //----------------------------------------------------------------------------
 //
 // Loads a texture by number, and binds it for later use.
@@ -354,8 +358,15 @@ void init(void)
     CheckError(); // Allocate texture objects
 
     // Load shaders and use the resulting shader program
-    shaderProgram = InitShader("res/shaders/vAToF.glsl", "res/shaders/fStart.glsl");
-    // shaderProgram = InitShader("res/shaders/vGToJ.glsl", "res/shaders/fStart.glsl");
+    // Comment/uncomment the following lines to apply the respective shaders
+    if (shaderNum == 1)
+    {
+        shaderProgram = InitShader("res/shaders/vAToF.glsl", "res/shaders/fAToF.glsl");
+    }
+    else if (shaderNum == 2)
+    {
+        shaderProgram = InitShader("res/shaders/vGToJ.glsl", "res/shaders/fGToJ.glsl");
+    }
 
     glUseProgram(shaderProgram);
     CheckError();
@@ -762,6 +773,34 @@ void timer(int unused)
 
 //----------------------------------------------------------------------------
 
+void shaderSelect()
+{
+    while ((shaderNum < 1 || shaderNum > 2))
+    {
+        cout << "Select shader set to use. [1] for Parts A-F and [2] for Parts G-J: ";
+        cin >> shaderNum;
+        if (cin.fail())
+        {
+            cout << "ERROR -- You did not enter an integer\n";
+            cin.clear();
+            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            continue;
+        }
+        else if (shaderNum == 0)
+        {
+            shaderNum = 1;
+        }
+        else if (shaderNum < 1 || shaderNum > 2)
+        {
+            cout << "ERROR -- You did not enter an integer between 1 and 2\n";
+            continue;
+        }
+    }
+    cout << "\nShader set chosen: " << shaderNum;
+}
+
+//----------------------------------------------------------------------------
+
 char dirDefault1[] = "res/models-textures";
 char dirDefault3[] = "/tmp/models-textures";
 char dirDefault4[] = "/d/models-textures";
@@ -815,6 +854,8 @@ int main(int argc, char *argv[])
 #endif
 
     CheckError(); // This bug is explained at: http://www.opengl.org/wiki/OpenGL_Loading_Library
+
+    shaderSelect();
 
     init();
     CheckError();
