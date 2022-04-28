@@ -78,6 +78,7 @@ SceneObject sceneObjs[maxObjects]; // An array storing the objects currently in 
 int nObjects = 0;    // How many objects are currenly in the scene.
 int currObject = -1; // The current object
 int toolObj = -1;    // The object currently being modified
+int removedObjs = 0;
 
 //----------------------------------------------------------------------------
 //
@@ -243,6 +244,7 @@ static void adjustScaleY(vec2 sy) {
 }
 
 
+
 //----------------------------------------------------------------------------
 //------Set the mouse buttons to rotate the camera----------------------------
 //------around the centre of the scene.---------------------------------------
@@ -340,6 +342,14 @@ void init(void) {
     sceneObjs[1].texId = 0; // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 
+    // Part I: second light
+    addObject(55); // Sphere for the second light
+    sceneObjs[2].loc = vec4(-2.0, 1.0, 1.0, 1.0); // slightly changed the location
+    sceneObjs[2].scale = 0.1;
+    sceneObjs[2].texId = 0; // Plain texture
+    sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
+
+
     addObject(rand() % numMeshes); // A test mesh
 
     // We need to enable the depth test to discard fragments that
@@ -371,8 +381,18 @@ void drawMesh(SceneObject sceneObj) {
 
     // Set the model matrix - this should combine translation, rotation and scaling based on what's
     // in the sceneObj structure (see near the top of the program).
+    mat4 xRotation = RotateX(-1 * sceneObj.angles[0]);
+    mat4 yRotation = RotateY(sceneObj.angles[1]);
+    mat4 zRotation = RotateZ(-1 * sceneObj.angles[2]);
+    mat4 xyzRotation = xRotation * yRotation * zRotation;
+    mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale) * xyzRotation;
 
-    mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale);
+    // // Trying to rotate the light.
+    // mat4 xLRotation = RotateX(-1 * sceneObjs[1].angles[0]);
+    // mat4 yLRotation = RotateY(sceneObjs[1].angles[1]);
+    // mat4 zLRotation = RotateZ(-1 * sceneObjs[1].angles[2]);
+    // mat4 xyzLRotation = xLRotation * yLRotation * zLRotation;
+    // mat4 Lmodel = Translate(sceneObjs[1].loc) * Scale(sceneObjs[1].scale) * xyzRotation;
 
 
     // Set the model-view matrix for the shaders
@@ -401,22 +421,47 @@ void display(void) {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     CheckError(); // May report a harmless GL_INVALID_OPERATION with GLEW on the first frame
 
-    // Set the view matrix. To start with this just moves the camera
-    // backwards.  You'll need to add appropriate rotations.
+    mat4 xRotation = RotateX(camRotUpAndOverDeg);// Set the view matrix. To start with this just moves the camera
+    mat4 yRotation = RotateY(camRotSidewaysDeg);// backwards.  You'll need to add appropriate rotations.
+    mat4 xyRotation = xRotation * yRotation;
 
-    view = Translate(0.0, 0.0, -viewDist);
+    // added this line, (I think it's from part A) to get part I to work
+    mat4 rotate = RotateX(camRotUpAndOverDeg) * RotateY(camRotSidewaysDeg);
+    
+    view = Translate(0.0, 0.0, -viewDist) * xyRotation;
 
     SceneObject lightObj1 = sceneObjs[1];
     vec4 lightPosition = view * lightObj1.loc;
 
-    glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
-                 1, lightPosition);
+    // Part I: light position determined by rotation not translation hence rotate instead of view
+    SceneObject lightObj2 = sceneObjs[2]; //second light
+    vec4 lightPosition2 = rotate * lightObj2.loc;
+
+    glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),  1, lightPosition);
     CheckError();
+
+    glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition2"), 1, lightPosition2);
+    CheckError();
+
+    glUniform1f(glGetUniformLocation(shaderProgram, "LightBrightness"), lightObj1.brightness);
+    CheckError();
+
+    glUniform1f(glGetUniformLocation(shaderProgram, "LightBrightness2"), lightObj2.brightness);
+    CheckError();
+
+    glUniform3fv(glGetUniformLocation(shaderProgram, "LightRGB"), 1, lightObj1.rgb);
+    CheckError();
+
+    glUniform3fv(glGetUniformLocation(shaderProgram, "LightRGB2"), 1, lightObj2.rgb);
+    CheckError();
+
 
     for (int i = 0; i < nObjects; i++) {
         SceneObject so = sceneObjs[i];
 
-        vec3 rgb = so.rgb * lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0;
+        // vec3 rgb = so.rgb * lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0 * lightObj2.brightness;
+        vec3 rgb = so.rgb * lightObj1.rgb * so.brightness * 2.0;
+
         glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb);
         CheckError();
         glUniform3fv(glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb);
@@ -453,6 +498,7 @@ static void groundMenu(int id) {
     glutPostRedisplay();
 }
 
+
 static void adjustBrightnessY(vec2 by) {
     sceneObjs[toolObj].brightness += by[0];
     sceneObjs[toolObj].loc[1] += by[1];
@@ -468,6 +514,11 @@ static void adjustBlueBrightness(vec2 bl_br) {
     sceneObjs[toolObj].brightness += bl_br[1];
 }
 
+static void rotateLight(vec2 light_rot){
+    sceneObjs[1].angles[0] = sceneObjs[1].angles[0] + light_rot[0];
+    sceneObjs[1].angles[1] = sceneObjs[1].angles[1] + light_rot[1];
+}
+
 static void lightMenu(int id) {
     deactivateTool();
     if (id == 70) {
@@ -476,6 +527,18 @@ static void lightMenu(int id) {
                          adjustBrightnessY, mat2(1.0, 0.0, 0.0, 10.0));
     } else if (id >= 71 && id <= 74) {
         toolObj = 1;
+        setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
+                         adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
+    } 
+    else if (id == 79) {
+        setToolCallbacks(rotateLight, mat2(1, 1, 0, 1), rotateLight, mat2(1, 1, 0, 1));
+    }
+    else if (id == 80) {   //for moving light2
+        toolObj = 2;
+        setToolCallbacks(adjustLocXZ, camRotZ(),
+                         adjustBrightnessY, mat2(1.0, 0.0, 0.0, 10.0));
+    } else if (id >= 81 && id <= 84) {  //for adjusting the RGB values for light2
+        toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
     } else {
@@ -506,6 +569,18 @@ static int createArrayMenu(int size, const char menuEntries[][128], void(*menuFn
     return menuId;
 }
 
+//for adjusting ambient diffuse light
+static void adjustLightAD(vec2 light_ad){
+    sceneObjs[toolObj].ambient = sceneObjs[toolObj].ambient + light_ad[0];
+    sceneObjs[toolObj].diffuse = sceneObjs[toolObj].diffuse + light_ad[1];
+}
+
+//for adjusting specular light and shine
+static void adjustSpecShine(vec2 spec_sh){
+    sceneObjs[toolObj].specular = sceneObjs[toolObj].specular + spec_sh[0];
+    sceneObjs[toolObj].shine = sceneObjs[toolObj].shine + spec_sh[1];
+}
+
 static void materialMenu(int id) {
     deactivateTool();
     if (currObject < 0) return;
@@ -514,11 +589,27 @@ static void materialMenu(int id) {
         setToolCallbacks(adjustRedGreen, mat2(1, 0, 0, 1),
                          adjustBlueBrightness, mat2(1, 0, 0, 1));
     }
-        // You'll need to fill in the remaining menu items here.
+    // You'll need to fill in the remaining menu items here.
+    else if (id == 20){//for Part C - amb/diff/spec/shine
+        toolObj = currObject;
+        setToolCallbacks(adjustLightAD, mat2(1, 0, 0, 1),
+                         adjustSpecShine, mat2(1, 1, 0, 1));
+    }
     else {
         printf("Error in materialMenu\n");
     }
 }
+// //for adjusting ambient diffuse light
+// static void adjustLightAD(vec2 light_ad){
+//     sceneObjs[currObject].ambient = sceneObjs[currObject].ambient + light_ad[0];
+//     sceneObjs[currObject].diffuse = sceneObjs[currObject].diffuse + light_ad[1];
+// }
+
+// //for adjusting specular light and shine
+// static void adjustSpecShine(vec2 spec_sh){
+//     sceneObjs[currObject].specular = sceneObjs[currObject].specular + spec_sh[0];
+//     sceneObjs[currObject].shine = sceneObjs[currObject].shine + spec_sh[1];
+// }
 
 static void adjustAngleYX(vec2 angle_yx) {
     sceneObjs[currObject].angles[1] += angle_yx[0];
@@ -530,12 +621,24 @@ static void adjustAngleZTexscale(vec2 az_ts) {
     sceneObjs[currObject].texScale += az_ts[1];
 }
 
+static void deleteCurrent(int currid) {
+    sceneObjs[currObject].meshId = NULL;
+    currObject = -1;
+    removedObjs = removedObjs + 1;
+}
+
 static void mainmenu(int id) {
     deactivateTool();
     if (id == 41 && currObject >= 0) {
         toolObj = currObject;
         setToolCallbacks(adjustLocXZ, camRotZ(),
                          adjustScaleY, mat2(0.05, 0, 0, 10));
+    }
+    if (id == 45 && currObject > -1) {
+        deleteCurrent(currObject);
+    }
+    if (id == 46 && currObject > -1) {
+        addObject(sceneObjs[currObject].meshId);
     }
     if (id == 50)
         doRotate();
@@ -551,7 +654,7 @@ static void makeMenu() {
 
     int materialMenuId = glutCreateMenu(materialMenu);
     glutAddMenuEntry("R/G/B/All", 10);
-    glutAddMenuEntry("UNIMPLEMENTED: Ambient/Diffuse/Specular/Shine", 20);
+    glutAddMenuEntry("Ambient/Diffuse/Specular/Shine", 20);
 
     int texMenuId = createArrayMenu(numTextures, textureMenuEntries, texMenu);
     int groundMenuId = createArrayMenu(numTextures, textureMenuEntries, groundMenu);
@@ -559,6 +662,7 @@ static void makeMenu() {
     int lightMenuId = glutCreateMenu(lightMenu);
     glutAddMenuEntry("Move Light 1", 70);
     glutAddMenuEntry("R/G/B/All Light 1", 71);
+    glutAddMenuEntry("Rotate Light 1", 79);
     glutAddMenuEntry("Move Light 2", 80);
     glutAddMenuEntry("R/G/B/All Light 2", 81);
 
@@ -566,6 +670,8 @@ static void makeMenu() {
     glutAddMenuEntry("Rotate/Move Camera", 50);
     glutAddSubMenu("Add object", objectId);
     glutAddMenuEntry("Position/Scale", 41);
+    glutAddMenuEntry("Delete Object", 45);
+    glutAddMenuEntry("Duplicate Current Object", 46);
     glutAddMenuEntry("Rotation/Texture Scale", 55);
     glutAddSubMenu("Material", materialMenuId);
     glutAddSubMenu("Texture", texMenuId);
@@ -627,25 +733,32 @@ void reshape(int width, int height) {
     windowHeight = height;
 
     glViewport(0, 0, width, height);
-    
-    //[Naomi]: Part D
-    GLfloat nearDist = 0.02;
 
-    //[Naomi]: Part E
-    if(width < height) {
-        projection = Frustum(-nearDist,
-                        nearDist,
-                        -nearDist*(float)height/(float)width, 
-                        nearDist*(float)height/(float)width,
-                        nearDist, 100.0);                    
-    } else {
+    // You'll need to modify this so that the view is similar to that in the
+    // sample solution.
+    // In particular: 
+    //     - the view should include "closer" visible objects (slightly tricky)
+    //     - when the width is less than the height, the view should adjust so
+    //         that the same part of the scene is visible across the width of
+    //         the window.
+
+    GLfloat nearDist = 0.1;
+
+
+    if (height < width) {
         projection = Frustum(-nearDist * (float) width / (float) height,
-                         nearDist * (float) width / (float) height,
-                         -nearDist, nearDist,
-                         nearDist, 100.0);
+                                nearDist * (float) width / (float) height,
+                                -nearDist, nearDist,
+                                nearDist, 1000.0);
     }
-
-
+    else {
+        projection = Frustum(-nearDist, nearDist,
+                                -nearDist * (float) height / (float) width,
+                                nearDist * (float) height / (float) width,
+                                 nearDist, 1000.0);
+    }
+    
+                         
 }
 
 //----------------------------------------------------------------------------
