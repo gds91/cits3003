@@ -1,16 +1,11 @@
 #version 150
 
-//Part G: per fragment interpolated values from vertex shader
-in vec3 fN;
-in vec3 fE;
-in vec3 fL; 
-in vec3 fL2;
-
 in vec2 texCoord;
 in vec4 position;
 in vec3 normal;
 
 vec4 color;
+out vec4 fColor;
 
 uniform sampler2D texture;
 
@@ -43,7 +38,7 @@ void main()
     vec3 H = normalize( L + E );  // Halfway vector
 
     vec3 L2 = normalize(Lvec2); //Direction 
-    vec3 H2 = normalize (L2 + E);
+    vec3 H2 = normalize (L2);
 
     // Transform vertex normal into eye coordinates (assumes scaling
     // is uniform across dimensions)
@@ -51,6 +46,7 @@ void main()
 
     // Compute terms in the illumination equation
     vec3 ambient = AmbientProduct;
+    vec3 ambient2 = AmbientProduct;
 
     float Kd = max( dot(L, N), 0.0 );
     vec3  diffuse = Kd*DiffuseProduct;
@@ -75,7 +71,7 @@ void main()
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
 
-    color.rgb = globalAmbient + ambient + diffuse + specular;
+    color.rgb = globalAmbient + ambient + diffuse + specular + diffuse2 + specular2 + ambient2;
     color.a = 1.0;
 
     gl_FragColor = color * texture2D( texture, texCoord * 2.0 );
