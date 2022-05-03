@@ -387,18 +387,18 @@ void init(void)
     addObject(0); // Square for the ground
     sceneObjs[0].loc = vec4(0.0, 0.0, 0.0, 1.0);
     sceneObjs[0].scale = 10.0;
-    sceneObjs[0].angles[0] = 90.0; // Rotate it.
+    sceneObjs[0].angles[0] = -90.0; // Rotate it. (NOTE: flipped this value to fix Part I issue)
     sceneObjs[0].texScale = 5.0;   // Repeat the texture.
 
     addObject(55); // Sphere for the first light
-    sceneObjs[1].loc = vec4(2.0, 1.0, 1.0, 1.0);
+    sceneObjs[1].loc = vec4(1.0, 1.0, 1.0, 1.0);
     sceneObjs[1].scale = 0.1;
     sceneObjs[1].texId = 0;        // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
 
     //Part I: sphere for second light
     addObject(55);
-    sceneObjs[2].loc = vec4(-2.0, 1.0, 1.0, 1.0); //second light needs to be in a different location
+    sceneObjs[2].loc = vec4(-1.0, 1.0, 1.0, 1.0); //second light needs to be in a different location
     sceneObjs[2].scale = 0.1;
     sceneObjs[2].texId = 0;        // Plain texture
     sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
