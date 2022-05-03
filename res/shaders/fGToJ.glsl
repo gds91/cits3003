@@ -1,6 +1,16 @@
-varying vec4 position;
-varying vec3 normal;
-varying vec2 texCoord;  // The third coordinate is always 0.0 and is discarded
+#version 150
+
+//Part G: per fragment interpolated values from vertex shader
+in vec3 fN;
+in vec3 fE;
+in vec3 fL; 
+in vec3 fL2;
+
+in vec2 texCoord;
+in vec4 position;
+in vec3 normal;
+
+vec4 color;
 
 uniform sampler2D texture;
 
@@ -12,23 +22,16 @@ uniform float Shininess;
 
 //First light source
 uniform vec4 LightPosition;
-uniform vec4 LightBrightness;
 
 //Part I: second light source
 uniform vec4 LightPosition2;
-uniform vec4 LightBrightness2;
-
-vec4 color;
 
 
 //Part G: copied main from vertex shader to fragment shader
 void main()
 {
-
-    // Transform vertex position into eye coordinates
     vec3 pos = (ModelView * position).xyz;
-
-
+    
     // The vector to the light from the vertex    
     vec3 Lvec = LightPosition.xyz - pos;
     // Part I: vector to the origin from light 2 
@@ -71,8 +74,9 @@ void main()
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    color.rgb = globalAmbient  + ambient + diffuse + specular;
+
+    color.rgb = globalAmbient + ambient + diffuse + specular;
     color.a = 1.0;
 
-    gl_FragColor = color * texture2D(texture, texCoord * 2.0);
+    gl_FragColor = color * texture2D( texture, texCoord * 2.0 );
 }
