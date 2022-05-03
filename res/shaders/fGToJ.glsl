@@ -53,6 +53,7 @@ void main()
     float lightReduction = length(Lvec);
     // color.rgb = globalAmbient  + ambient + diffuse + specular;
     // color.rgb = globalAmbient  + ((ambient + diffuse + specular) / lightReduction);
+    // Part H
     color.rgb = globalAmbient  + ((ambient + diffuse) / lightReduction);
     color.a = 1.0;
 
