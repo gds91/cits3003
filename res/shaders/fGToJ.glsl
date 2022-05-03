@@ -49,7 +49,6 @@ void main()
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    // DISCUSS WITH NAOMI. PART G/H
     // reimplmented Part F to enable distance-based lighting
     float lightReduction = length(Lvec);
     // color.rgb = globalAmbient  + ambient + diffuse + specular;
