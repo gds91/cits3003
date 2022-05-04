@@ -4,6 +4,8 @@ in vec3 vPosition;
 in vec3 vNormal;
 in vec2 vTexCoord;
 
+uniform float texScale;
+
 //Part G: added the below variables
 out vec4 position;
 out vec3 normal;
@@ -19,4 +21,5 @@ void main()
     normal = vNormal;
 
     gl_Position = Projection * ModelView * position;
+    texCoord = vTexCoord * texScale;
 }

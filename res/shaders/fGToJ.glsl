@@ -49,11 +49,10 @@ void main()
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
-    // reimplmented Part F to enable distance-based lighting
     float lightReduction = length(Lvec);
     // color.rgb = globalAmbient  + ambient + diffuse + specular;
     // color.rgb = globalAmbient  + ((ambient + diffuse + specular) / lightReduction);
-    // Part H
+    // part H: Texture specular - shifted specular value from color.rgb to gl_FragColor
     color.rgb = globalAmbient  + ((ambient + diffuse) / lightReduction);
     color.a = 1.0;
 
