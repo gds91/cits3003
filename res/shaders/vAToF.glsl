@@ -49,8 +49,8 @@ void main()
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
     // Part F
-    float lightReduction = length(Lvec);
-    color.rgb = globalAmbient  + ((ambient + diffuse + specular) / lightReduction);
+    float lightReduction = 1.0 / (0.2 + 0.3*length(Lvec) + 0.4*pow(length(Lvec), 2.0));
+    color.rgb = globalAmbient  + ((ambient + diffuse + specular) * lightReduction);
     color.a = 1.0;
 
     gl_Position = Projection * ModelView * vpos;
