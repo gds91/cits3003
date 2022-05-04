@@ -81,7 +81,7 @@ int toolObj = -1;                  // The object currently being modified
 
 // Shader selection. Set as 1 for parts A-F, 2 for parts G-H,
 // and any other number to enable selection in terminal
-int shaderNum = -1;
+int shaderNum = 2;
 
 //----------------------------------------------------------------------------
 //
