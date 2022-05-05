@@ -387,14 +387,22 @@ void init(void)
     addObject(0); // Square for the ground
     sceneObjs[0].loc = vec4(0.0, 0.0, 0.0, 1.0);
     sceneObjs[0].scale = 10.0;
-    sceneObjs[0].angles[0] = 90.0; // Rotate it.
+    sceneObjs[0].angles[0] = -90.0; // Rotate it. (NOTE: flipped this value to fix Part I issue)
     sceneObjs[0].texScale = 5.0;   // Repeat the texture.
 
     addObject(55); // Sphere for the first light
-    sceneObjs[1].loc = vec4(2.0, 1.0, 1.0, 1.0);
+    sceneObjs[1].loc = vec4(1.0, 1.0, 1.0, 1.0);
     sceneObjs[1].scale = 0.1;
     sceneObjs[1].texId = 0;        // Plain texture
     sceneObjs[1].brightness = 0.2; // The light's brightness is 5 times this (below).
+
+    //Part I: sphere for second light
+    addObject(55);
+    sceneObjs[2].loc = vec4(-1.0, 1.0, 1.0, 1.0); //second light needs to be in a different location
+    sceneObjs[2].scale = 0.1;
+    sceneObjs[2].texId = 0;        // Plain texture
+    sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
+
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -434,7 +442,7 @@ void drawMesh(SceneObject sceneObj)
     mat4 zRotate = RotateZ(-1 * sceneObj.angles[2]);
     mat4 xyzRotate = xRotate * yRotate * zRotate;
     mat4 model = Translate(sceneObj.loc) * Scale(sceneObj.scale) * xyzRotate;
-
+    
     // Set the model-view matrix for the shaders
     glUniformMatrix4fv(modelViewU, 1, GL_TRUE, view * model);
 
@@ -474,8 +482,17 @@ void display(void)
     SceneObject lightObj1 = sceneObjs[1];
     vec4 lightPosition = view * lightObj1.loc;
 
+    //Part I: second light
+    SceneObject lightObj2 = sceneObjs[2];
+    vec4 lightPosition2 = xyRotate * lightObj2.loc; //rotate instead of view
+
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
                  1, lightPosition);
+    CheckError();
+
+    //Part I: pass second light position to shaders
+    glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition2"),
+                 1, lightPosition2);
     CheckError();
 
     for (int i = 0; i < nObjects; i++)
@@ -542,6 +559,11 @@ static void adjustBlueBrightness(vec2 bl_br)
     sceneObjs[toolObj].brightness += bl_br[1];
 }
 
+static void rotateLight(vec2 light_rot){
+    sceneObjs[1].angles[0] = sceneObjs[1].angles[0] + light_rot[0];
+    sceneObjs[1].angles[1] = sceneObjs[1].angles[1] + light_rot[1];
+}
+
 static void lightMenu(int id)
 {
     deactivateTool();
@@ -554,6 +576,18 @@ static void lightMenu(int id)
     else if (id >= 71 && id <= 74)
     {
         toolObj = 1;
+        setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
+                         adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
+    }
+      else if (id == 79) {
+        setToolCallbacks(rotateLight, mat2(1, 1, 0, 1), rotateLight, mat2(1, 1, 0, 1));
+    }
+    else if (id == 80) {   //for moving light2
+        toolObj = 2;
+        setToolCallbacks(adjustLocXZ, camRotZ(),
+                         adjustBrightnessY, mat2(1.0, 0.0, 0.0, 10.0));
+    } else if (id >= 81 && id <= 84) {  //for adjusting the RGB values for light2
+        toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
     }
@@ -588,6 +622,7 @@ static int createArrayMenu(int size, const char menuEntries[][128], void (*menuF
     }
     return menuId;
 }
+
 
 static void materialMenu(int id)
 {
