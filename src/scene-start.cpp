@@ -486,24 +486,42 @@ void display(void)
     SceneObject lightObj2 = sceneObjs[2];
     vec4 lightPosition2 = xyRotate * lightObj2.loc; //rotate instead of view
 
+    //First light uniform variables
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
                  1, lightPosition);
     CheckError();
 
-    //Part I: pass second light position to shaders
-    glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition2"),
+    glUniform3fv(glGetUniformLocation(shaderProgram, "LightRGB"),
+                 1, lightObj1.rgb);
+    CheckError();
+
+    glUniform1f(glGetUniformLocation(shaderProgram, "LightBrightness"),
+                lightObj1.brightness);
+    CheckError();
+
+    //Part I: second light uniform variables
+    glUniform3fv(glGetUniformLocation(shaderProgram, "LightPosition2"),
                  1, lightPosition2);
+    CheckError();
+
+    glUniform4fv(glGetUniformLocation(shaderProgram, "LightRGB2"),
+                 1, lightObj2.rgb);
+    CheckError();
+    
+    glUniform1f(glGetUniformLocation(shaderProgram, "LightBrightness2"),
+                 lightObj2.brightness);
     CheckError();
 
     for (int i = 0; i < nObjects; i++)
     {
         SceneObject so = sceneObjs[i];
-        // part H modify
-        vec3 rgb = so.rgb * lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0;
+        // part H: Object specular - added rgbSpec variable excludes sceneObj's rgb values
+        vec3 rgbSpec = lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0;
+        vec3 rgb = so.rgb * rgbSpec;
         glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb);
         CheckError();
         glUniform3fv(glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb);
-        glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgb);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgbSpec);
         glUniform1f(glGetUniformLocation(shaderProgram, "Shininess"), so.shine);
         CheckError();
 
