@@ -17,9 +17,13 @@ uniform float Shininess;
 
 //First light source
 uniform vec4 LightPosition;
-
 //Part I: second light source
 uniform vec4 LightPosition2;
+
+//Part G: spotlight
+uniform vec4 LightPosition3;
+uniform float SpotlightSize;
+uniform vec4 LightRotation3;
 
 
 //Part G: copied main from vertex shader to fragment shader
@@ -31,6 +35,7 @@ void main()
     vec3 Lvec = LightPosition.xyz - pos;
     // Part I: vector to the origin from light 2 
     vec3 Lvec2 = LightPosition2.xyz;
+
 
     // Unit direction vectors for Blinn-Phong shading calculation
     vec3 L = normalize( Lvec );   // Direction to the light source
@@ -47,22 +52,37 @@ void main()
     // Compute terms in the illumination equation
     vec3 ambient = AmbientProduct;
     vec3 ambient2 = AmbientProduct;
+    vec3 ambient3 = AmbientProduct;
 
     float Kd = max( dot(L, N), 0.0 );
     vec3  diffuse = Kd*DiffuseProduct;
 
     float Kd2 = max( dot(L2, N), 0.0 );
     vec3  diffuse2 = Kd2 * DiffuseProduct;
+    
+    vec3 diffuse3 = diffuse;
 
     float Ks = pow( max(dot(N, H), 0.0), Shininess );
     vec3  specular = Ks * SpecularProduct;
 
     float Ks2 = pow( max(dot(N, H2), 0.0), Shininess );
     vec3  specular2 = Ks2 * SpecularProduct;
+
+    vec3 specular3 = specular;
     
+    //Part J: spotlight
+    float spotlightTheta = dot(L, normalize(LightRotation3.xyz));
+    if(spotlightTheta < SpotlightSize){
+        ambient3 = vec3(0.0, 0.0, 0.0);
+		diffuse3 = vec3(0.0, 0.0, 0.0);
+		specular3 = vec3(0.0, 0.0, 0.0);
+
+    }
+
     if (dot(L, N) < 0.0 ) {
 	specular = vec3(0.0, 0.0, 0.0);
     } 
+
 
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
@@ -71,8 +91,8 @@ void main()
     // color.rgb = globalAmbient  + ((ambient + diffuse + specular) / lightReduction);
     // part H: Texture specular - shifted specular value from color.rgb to gl_FragColor
     // color.rgb = globalAmbient  + ((ambient + diffuse) / lightReduction);
-    color.rgb = globalAmbient  + ((ambient + diffuse) * lightReduction);
+    color.rgb = globalAmbient  + ((ambient + diffuse) * lightReduction) + ambient2 + diffuse2 ;
     color.a = 1.0;
 
-    gl_FragColor = color * texture2D(texture, texCoord * 2.0) + vec4(specular * lightReduction, 1.0);
+    gl_FragColor = color * texture2D(texture, texCoord * 2.0) + vec4(specular * lightReduction + specular2, 1.0);
 }
