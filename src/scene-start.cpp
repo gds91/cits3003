@@ -83,6 +83,9 @@ int toolObj = -1;                  // The object currently being modified
 // and any other number to enable selection in terminal
 int shaderNum = 2;
 
+//Part J: specify spotlight size
+float spotlightSize = -1.0;
+
 //----------------------------------------------------------------------------
 //
 // Loads a texture by number, and binds it for later use.
@@ -403,6 +406,12 @@ void init(void)
     sceneObjs[2].texId = 0;        // Plain texture
     sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
 
+    //Part J: sphere for third light
+    addObject(55);
+    sceneObjs[3].loc = vec4(0.0, 1.0, 1.0, 1.0); //second light needs to be in a different location
+    sceneObjs[3].scale = 0.1;
+    sceneObjs[3].texId = 0;        // Plain texture
+    sceneObjs[3].brightness = 0.2; // The light's brightness is 5 times this (below).
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -486,30 +495,33 @@ void display(void)
     SceneObject lightObj2 = sceneObjs[2];
     vec4 lightPosition2 = xyRotate * lightObj2.loc; //rotate instead of view
 
-    //First light uniform variables
+    //Part J: spotlight
+    SceneObject lightObj3 = sceneObjs[3];
+    vec4 lightPosition3 = view * lightObj3.loc;
+    vec4 lightRotation3 = view * RotateZ(sceneObjs[3].angles[2]) * 
+                            RotateY(sceneObjs[3].angles[1]) * 
+                            RotateX(sceneObjs[3].angles[0]) * vec4( 0.0, 1.0, 0.0, 0.0);
+
+
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
                  1, lightPosition);
     CheckError();
 
-    glUniform3fv(glGetUniformLocation(shaderProgram, "LightRGB"),
-                 1, lightObj1.rgb);
-    CheckError();
-
-    glUniform1f(glGetUniformLocation(shaderProgram, "LightBrightness"),
-                lightObj1.brightness);
-    CheckError();
-
-    //Part I: second light uniform variables
-    glUniform3fv(glGetUniformLocation(shaderProgram, "LightPosition2"),
+    //Part I: pass second light position to shaders
+    glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition2"),
                  1, lightPosition2);
     CheckError();
 
-    glUniform4fv(glGetUniformLocation(shaderProgram, "LightRGB2"),
-                 1, lightObj2.rgb);
+    //Part J: spotlight uniform variables
+    glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition3"),
+                 1, lightPosition3);
     CheckError();
-    
-    glUniform1f(glGetUniformLocation(shaderProgram, "LightBrightness2"),
-                 lightObj2.brightness);
+
+    glUniform1f(glGetUniformLocation(shaderProgram, "SpotlightSize"), 
+                spotlightSize);
+    CheckError();
+    glUniform4fv(glGetUniformLocation(shaderProgram, "LightRotation3"),
+                 1, lightRotation3);
     CheckError();
 
     for (int i = 0; i < nObjects; i++)
@@ -577,8 +589,8 @@ static void adjustBlueBrightness(vec2 bl_br)
 }
 
 static void rotateLight(vec2 light_rot){
-    sceneObjs[1].angles[0] = sceneObjs[1].angles[0] + light_rot[0];
-    sceneObjs[1].angles[1] = sceneObjs[1].angles[1] + light_rot[1];
+    sceneObjs[3].angles[0] = sceneObjs[3].angles[0] + light_rot[0];
+    sceneObjs[3].angles[1] = sceneObjs[3].angles[1] + light_rot[1];
 }
 
 static void lightMenu(int id)
@@ -607,6 +619,10 @@ static void lightMenu(int id)
         toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
+    } else if (id == 85) {  //for adjusting spotlight
+        toolObj = 3;
+        setToolCallbacks(rotateLight, mat2(-400, 0, 0, -200),
+                         adjustBrightnessY, mat2(1.0, 0, 0, -1.0));
     }
     else
     {
@@ -713,6 +729,7 @@ static void makeMenu()
     glutAddMenuEntry("R/G/B/All Light 1", 71);
     glutAddMenuEntry("Move Light 2", 80);
     glutAddMenuEntry("R/G/B/All Light 2", 81);
+    glutAddMenuEntry("Adjust Light 3", 85);
 
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera", 50);
