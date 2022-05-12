@@ -83,7 +83,7 @@ int toolObj = -1;                  // The object currently being modified
 // and any other number to enable selection in terminal
 int shaderNum = 2;
 
-//Part J: specify spotlight size
+// Part J: specify spotlight size
 float spotlightSize = -1.0;
 
 //----------------------------------------------------------------------------
@@ -339,45 +339,6 @@ static void addObject(int id)
     glutPostRedisplay();
 }
 
-// Part J - Object deletion and duplication functions
-static void duplicateObject()
-{
-    cout << currObject << endl;
-    if (nObjects == maxObjects)
-    {
-        return;
-    }
-    // ignore ground and light objects
-    else if (currObject <= 2)
-    {
-        return;
-    }
-    // assign duplicated object the same values as the parent object
-    sceneObjs[nObjects] = sceneObjs[currObject];
-    toolObj = currObject = nObjects++;
-    setToolCallbacks(adjustLocXZ, camRotZ(),
-                     adjustScaleY, mat2(0.05, 0.0, 0.0, 10.0));
-    // adjust starting position so there's no overlap with 'parent' object
-    vec2 currPos = currMouseXYworld(camRotSidewaysDeg);
-    sceneObjs[currObject].loc[0] += 0.5;
-    glutPostRedisplay();
-}
-
-static void deleteObject()
-{
-    cout << currObject << endl;
-    // ignore ground and light objects
-    if (currObject <= 2)
-    {
-        return;
-    }
-    nObjects -= 1;
-    sceneObjs[currObject] = sceneObjs[nObjects];
-    currObject = nObjects;
-    doRotate();
-    glutPostRedisplay();
-}
-
 //------The init function-----------------------------------------------------
 
 void init(void)
@@ -444,6 +405,13 @@ void init(void)
     sceneObjs[2].scale = 0.1;
     sceneObjs[2].texId = 0;        // Plain texture
     sceneObjs[2].brightness = 0.2; // The light's brightness is 5 times this (below).
+
+    // Part J: sphere for third light
+    addObject(55);
+    sceneObjs[3].loc = vec4(0.0, 1.0, 1.0, 1.0); // second light needs to be in a different location
+    sceneObjs[3].scale = 0.1;
+    sceneObjs[3].texId = 0;        // Plain texture
+    sceneObjs[3].brightness = 0.2; // The light's brightness is 5 times this (below).
 
     addObject(rand() % numMeshes); // A test mesh
 
@@ -527,13 +495,12 @@ void display(void)
     SceneObject lightObj2 = sceneObjs[2];
     vec4 lightPosition2 = xyRotate * lightObj2.loc; // rotate instead of view
 
-    //Part J: spotlight
+    // Part J: spotlight
     SceneObject lightObj3 = sceneObjs[3];
     vec4 lightPosition3 = view * lightObj3.loc;
-    vec4 lightRotation3 = view * RotateZ(sceneObjs[3].angles[2]) * 
-                            RotateY(sceneObjs[3].angles[1]) * 
-                            RotateX(sceneObjs[3].angles[0]) * vec4( 0.0, 1.0, 0.0, 0.0);
-
+    vec4 lightRotation3 = view * RotateZ(sceneObjs[3].angles[2]) *
+                          RotateY(sceneObjs[3].angles[1]) *
+                          RotateX(sceneObjs[3].angles[0]) * vec4(0.0, 1.0, 0.0, 0.0);
 
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
                  1, lightPosition);
@@ -544,11 +511,12 @@ void display(void)
                  1, lightPosition2);
     CheckError();
 
-    //Part J: spotlight uniform variables
+    // Part J: spotlight uniform variables
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition3"),
                  1, lightPosition3);
     CheckError();
-    glUniform1f(glGetUniformLocation(shaderProgram, "SpotlightSize"), 
+
+    glUniform1f(glGetUniformLocation(shaderProgram, "SpotlightSize"),
                 spotlightSize);
     CheckError();
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightRotation3"),
@@ -621,8 +589,8 @@ static void adjustBlueBrightness(vec2 bl_br)
 
 static void rotateLight(vec2 light_rot)
 {
-    sceneObjs[1].angles[0] = sceneObjs[1].angles[0] + light_rot[0];
-    sceneObjs[1].angles[1] = sceneObjs[1].angles[1] + light_rot[1];
+    sceneObjs[3].angles[0] = sceneObjs[3].angles[0] + light_rot[0];
+    sceneObjs[3].angles[1] = sceneObjs[3].angles[1] + light_rot[1];
 }
 
 static void lightMenu(int id)
@@ -655,7 +623,9 @@ static void lightMenu(int id)
         toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
-    } else if (id == 85) {  //for adjusting spotlight
+    }
+    else if (id == 85)
+    { // for adjusting spotlight
         toolObj = 3;
         setToolCallbacks(rotateLight, mat2(-400, 0, 0, -200),
                          adjustBrightnessY, mat2(1.0, 0, 0, -1.0));
@@ -745,16 +715,6 @@ static void mainmenu(int id)
     }
     if (id == 99)
         exit(0);
-
-    // Part J - Object duplication and deletion callback functions
-    if (id == 45 && currObject >= 0)
-    {
-        duplicateObject();
-    }
-    if (id == 46 && currObject >= 0)
-    {
-        deleteObject();
-    }
 }
 
 static void makeMenu()
@@ -779,11 +739,6 @@ static void makeMenu()
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera", 50);
     glutAddSubMenu("Add object", objectId);
-
-    // Part J - Add menu entries for object duplication and deletion
-    glutAddMenuEntry("Duplicate current object", 45);
-    glutAddMenuEntry("Delete current object", 46);
-
     glutAddMenuEntry("Position/Scale", 41);
     glutAddMenuEntry("Rotation/Texture Scale", 55);
     glutAddSubMenu("Material", materialMenuId);

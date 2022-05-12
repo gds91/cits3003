@@ -17,11 +17,12 @@ uniform float Shininess;
 
 //First light source
 uniform vec4 LightPosition;
+
 //Part I: second light source
 uniform vec4 LightPosition2;
 
-//Part G: spotlight
-uniform vec4 LightPosition3;
+//Part J: spotlight
+uniform vec4 LightPostion3;
 uniform float SpotlightSize;
 uniform vec4 LightRotation3;
 
@@ -30,12 +31,15 @@ uniform vec4 LightRotation3;
 void main()
 {
     vec3 pos = (ModelView * position).xyz;
+
+    // globalAmbient is independent of distance from the light source
+    vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
     
     // The vector to the light from the vertex    
     vec3 Lvec = LightPosition.xyz - pos;
     // Part I: vector to the origin from light 2 
     vec3 Lvec2 = LightPosition2.xyz;
-
+    vec3 Lvec3 = LightPosition.xyz - pos;
 
     // Unit direction vectors for Blinn-Phong shading calculation
     vec3 L = normalize( Lvec );   // Direction to the light source
@@ -45,54 +49,61 @@ void main()
     vec3 L2 = normalize(Lvec2); //Direction 
     vec3 H2 = normalize (L2);
 
+    vec3 L3 = normalize(Lvec3);
+    vec3 H3 = normalize (L3 + E);
+
     // Transform vertex normal into eye coordinates (assumes scaling
     // is uniform across dimensions)
     vec3 N = normalize( (ModelView*vec4(normal, 0.0)).xyz );
 
     // Compute terms in the illumination equation
     vec3 ambient = AmbientProduct;
-    vec3 ambient2 = AmbientProduct;
-    vec3 ambient3 = AmbientProduct;
+    vec3 ambient2 = globalAmbient;
+    vec3 ambient3 = globalAmbient;
 
+    //Diffuse calculations
     float Kd = max( dot(L, N), 0.0 );
     vec3  diffuse = Kd*DiffuseProduct;
-
     float Kd2 = max( dot(L2, N), 0.0 );
-    vec3  diffuse2 = Kd2 * DiffuseProduct;
-    
-    vec3 diffuse3 = diffuse;
+    vec3  diffuse2 = Kd2*DiffuseProduct;
+    float Kd3 = max( dot(L3, N), 0.0 );
+    vec3  diffuse3 = Kd3*DiffuseProduct;
 
+    //Specular calculations
     float Ks = pow( max(dot(N, H), 0.0), Shininess );
     vec3  specular = Ks * SpecularProduct;
-
     float Ks2 = pow( max(dot(N, H2), 0.0), Shininess );
     vec3  specular2 = Ks2 * SpecularProduct;
-
-    vec3 specular3 = specular;
+    float Ks3 = pow( max(dot(N, H3), 0.0), Shininess );
+    vec3  specular3 = Ks3 * SpecularProduct;
     
-    //Part J: spotlight
+    //If light is behind vertex then discard specular highlight
+    if (dot(L, N) < 0.0 ) {
+	specular = vec3(0.0, 0.0, 0.0);
+    } 
+    if (dot(L2, N) < 0.0 ) {
+	specular2 = vec3(0.0, 0.0, 0.0);
+    } 
+    if (dot(L3, N) < 0.0 ) {
+	specular3 = vec3(0.0, 0.0, 0.0);
+    } 
+
+    //Part J: spotlight 
     float spotlightTheta = dot(L, normalize(LightRotation3.xyz));
     if(spotlightTheta < SpotlightSize){
         ambient3 = vec3(0.0, 0.0, 0.0);
 		diffuse3 = vec3(0.0, 0.0, 0.0);
 		specular3 = vec3(0.0, 0.0, 0.0);
-
     }
-
-    if (dot(L, N) < 0.0 ) {
-	specular = vec3(0.0, 0.0, 0.0);
-    } 
-
-
-    // globalAmbient is independent of distance from the light source
-    vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
+    
     float lightReduction = 1.0 / (0.2 + 0.3*length(Lvec) + 0.4*pow(length(Lvec), 2.0));
     // color.rgb = globalAmbient  + ambient + diffuse + specular;
     // color.rgb = globalAmbient  + ((ambient + diffuse + specular) / lightReduction);
     // part H: Texture specular - shifted specular value from color.rgb to gl_FragColor
     // color.rgb = globalAmbient  + ((ambient + diffuse) / lightReduction);
-    color.rgb = globalAmbient  + ((ambient + diffuse) * lightReduction) + ambient2 + diffuse2 ;
+    
+    color.rgb = globalAmbient  + ((ambient + diffuse) * lightReduction) + ambient2 + diffuse2 + ((ambient3 + diffuse3) * lightReduction);
     color.a = 1.0;
 
-    gl_FragColor = color * texture2D(texture, texCoord * 2.0) + vec4(specular * lightReduction + specular2, 1.0);
+    gl_FragColor = color * texture2D(texture, texCoord * 2.0) + vec4((specular * lightReduction) + specular2 + (specular3 * lightReduction), 1.0);
 }
