@@ -23,7 +23,7 @@ uniform vec4 LightPosition2;
 
 //Part J: spotlight
 uniform vec4 LightPosition3;
-float SpotlightSize = 3.14 / 6;
+float SpotlightSize = radians(180) /5;
 uniform vec4 LightRotation3;
 
 
@@ -89,7 +89,7 @@ void main()
     } 
 
     //Part J: spotlight 
-    float spotlightTheta = dot(L3, normalize(LightRotation3.xyz));
+    float spotlightTheta = dot(L3, normalize(-LightRotation3.xyz));
     if(spotlightTheta < SpotlightSize){
         ambient3 = vec3(0.0, 0.0, 0.0);
 	 	diffuse3 = vec3(0.0, 0.0, 0.0);
@@ -102,7 +102,7 @@ void main()
     // part H: Texture specular - shifted specular value from color.rgb to gl_FragColor
     // color.rgb = globalAmbient  + ((ambient + diffuse) / lightReduction);
     
-    color.rgb = globalAmbient  + ((ambient + diffuse) * lightReduction) + ambient2 + diffuse2 + ((ambient3 + diffuse3) * lightReduction);
+    color.rgb = globalAmbient  + ambient + (diffuse * lightReduction) + ambient2 + diffuse2 + ambient3 + (diffuse3 * lightReduction);
     color.a = 1.0;
 
     gl_FragColor = (color * texture2D(texture, texCoord * 2.0) + vec4((specular * lightReduction) + specular2 + (specular3 * lightReduction), 1.0));
