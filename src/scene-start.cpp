@@ -390,7 +390,7 @@ void init(void)
     addObject(0); // Square for the ground
     sceneObjs[0].loc = vec4(0.0, 0.0, 0.0, 1.0);
     sceneObjs[0].scale = 10.0;
-    sceneObjs[0].angles[0] = -90.0; // Rotate it. (NOTE: flipped this value to fix Part I issue)
+    sceneObjs[0].angles[0] = -90.0; // Rotate it. 
     sceneObjs[0].texScale = 5.0;   // Repeat the texture.
 
     addObject(55); // Sphere for the first light
@@ -408,7 +408,7 @@ void init(void)
 
     //Part J: sphere for third light
     addObject(55);
-    sceneObjs[3].loc = vec4(0.0, 1.0, 1.0, 1.0); //second light needs to be in a different location
+    sceneObjs[3].loc = vec4(0.0, 1.0, 1.0, 1.0); 
     sceneObjs[3].scale = 0.1;
     sceneObjs[3].texId = 0;        // Plain texture
     sceneObjs[3].brightness = 0.2; // The light's brightness is 5 times this (below).
@@ -494,7 +494,7 @@ void display(void)
 
     //Part I: second light
     SceneObject lightObj2 = sceneObjs[2];
-    vec4 lightPosition2 = xyRotate * lightObj2.loc; //rotate instead of view
+    vec4 lightPosition2 = view * (lightObj2.loc - vec4(0.0,0.0,0.0,1.0)); //rotate instead of view
 
     //Part J: spotlight
     SceneObject lightObj3 = sceneObjs[3];
@@ -622,9 +622,6 @@ static void lightMenu(int id)
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
     }
-      else if (id == 79) {
-        setToolCallbacks(rotateLight, mat2(1, 1, 0, 1), rotateLight, mat2(1, 1, 0, 1));
-    }
     else if (id == 80) {   //for moving light2
         toolObj = 2;
         setToolCallbacks(adjustLocXZ, camRotZ(),
@@ -633,7 +630,7 @@ static void lightMenu(int id)
         toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
-    } else if (id == 85) {  //for adjusting spotlight
+    } else if (id == 85) {  //for rotating spotlight
         toolObj = 3;
         setToolCallbacks(rotateLight, mat2(-400, 0, 0, -200),
                          adjustBrightnessY, mat2(1.0, 0, 0, -1.0));
