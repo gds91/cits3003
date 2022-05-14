@@ -339,6 +339,45 @@ static void addObject(int id)
     glutPostRedisplay();
 }
 
+// Part J - Object deletion and duplication functions
+static void duplicateObject()
+{
+    cout << currObject << endl;
+    if (nObjects == maxObjects)
+    {
+        return;
+    }
+    // ignore ground and light objects
+    else if (currObject <= 3)
+    {
+        return;
+    }
+    // assign duplicated object the same values as the parent object
+    sceneObjs[nObjects] = sceneObjs[currObject];
+    toolObj = currObject = nObjects++;
+    setToolCallbacks(adjustLocXZ, camRotZ(),
+                     adjustScaleY, mat2(0.05, 0.0, 0.0, 10.0));
+    // adjust starting position so there's no overlap with 'parent' object
+    vec2 currPos = currMouseXYworld(camRotSidewaysDeg);
+    sceneObjs[currObject].loc[0] += 0.5;
+    glutPostRedisplay();
+}
+
+static void deleteObject()
+{
+    cout << currObject << endl;
+    // ignore ground and light objects
+    if (currObject <= 3)
+    {
+        return;
+    }
+    nObjects -= 1;
+    sceneObjs[currObject] = sceneObjs[nObjects];
+    currObject = nObjects;
+    doRotate();
+    glutPostRedisplay();
+}
+
 //------The init function-----------------------------------------------------
 
 void init(void)
@@ -715,6 +754,16 @@ static void mainmenu(int id)
     }
     if (id == 99)
         exit(0);
+
+    // Part J - Object duplication and deletion callback functions
+    if (id == 45 && currObject >= 0)
+    {
+        duplicateObject();
+    }
+    if (id == 46 && currObject >= 0)
+    {
+        deleteObject();
+    }
 }
 
 static void makeMenu()
@@ -739,6 +788,11 @@ static void makeMenu()
     glutCreateMenu(mainmenu);
     glutAddMenuEntry("Rotate/Move Camera", 50);
     glutAddSubMenu("Add object", objectId);
+
+    // Part J - Add menu entries for object duplication and deletion
+    glutAddMenuEntry("Duplicate current object", 45);
+    glutAddMenuEntry("Delete current object", 46);
+
     glutAddMenuEntry("Position/Scale", 41);
     glutAddMenuEntry("Rotation/Texture Scale", 55);
     glutAddSubMenu("Material", materialMenuId);
