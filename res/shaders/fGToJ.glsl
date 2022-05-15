@@ -10,7 +10,7 @@ out vec4 fColor;
 uniform sampler2D texture;
 
 // Naomi: Part G: moved vertex shader variables to fragment shader for per-fragment lighting
-uniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct;
+uniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct, AmbientProduct2, DiffuseProduct2, SpecularProduct2, AmbientProduct3, DiffuseProduct3, SpecularProduct3;
 uniform mat4 ModelView;
 uniform mat4 Projection;
 uniform float Shininess;
@@ -22,8 +22,8 @@ uniform vec4 LightPosition;
 uniform vec4 LightPosition2;
 
 //Part J: spotlight
-uniform vec4 LightPostion3;
-uniform float SpotlightSize;
+uniform vec4 LightPosition3;
+float SpotlightSize = radians(180) /5;
 uniform vec4 LightRotation3;
 
 
@@ -39,7 +39,7 @@ void main()
     vec3 Lvec = LightPosition.xyz - pos;
     // Part I: vector to the origin from light 2 
     vec3 Lvec2 = LightPosition2.xyz;
-    vec3 Lvec3 = LightPosition.xyz - pos;
+    vec3 Lvec3 = LightPosition3.xyz - pos;
 
     // Unit direction vectors for Blinn-Phong shading calculation
     vec3 L = normalize( Lvec );   // Direction to the light source
@@ -58,24 +58,24 @@ void main()
 
     // Compute terms in the illumination equation
     vec3 ambient = AmbientProduct;
-    vec3 ambient2 = globalAmbient;
-    vec3 ambient3 = globalAmbient;
+    vec3 ambient2 = AmbientProduct2;
+    vec3 ambient3 = AmbientProduct3;
 
     //Diffuse calculations
     float Kd = max( dot(L, N), 0.0 );
     vec3  diffuse = Kd*DiffuseProduct;
     float Kd2 = max( dot(L2, N), 0.0 );
-    vec3  diffuse2 = Kd2*DiffuseProduct;
+    vec3  diffuse2 = Kd2*DiffuseProduct2;
     float Kd3 = max( dot(L3, N), 0.0 );
-    vec3  diffuse3 = Kd3*DiffuseProduct;
+    vec3  diffuse3 = Kd3*DiffuseProduct3;
 
     //Specular calculations
     float Ks = pow( max(dot(N, H), 0.0), Shininess );
     vec3  specular = Ks * SpecularProduct;
     float Ks2 = pow( max(dot(N, H2), 0.0), Shininess );
-    vec3  specular2 = Ks2 * SpecularProduct;
+    vec3  specular2 = Ks2 * SpecularProduct2;
     float Ks3 = pow( max(dot(N, H3), 0.0), Shininess );
-    vec3  specular3 = Ks3 * SpecularProduct;
+    vec3  specular3 = Ks3 * SpecularProduct3;
     
     //If light is behind vertex then discard specular highlight
     if (dot(L, N) < 0.0 ) {
@@ -89,11 +89,11 @@ void main()
     } 
 
     //Part J: spotlight 
-    float spotlightTheta = dot(L, normalize(LightRotation3.xyz));
+    float spotlightTheta = dot(L3, normalize(-LightRotation3.xyz));
     if(spotlightTheta < SpotlightSize){
         ambient3 = vec3(0.0, 0.0, 0.0);
-		diffuse3 = vec3(0.0, 0.0, 0.0);
-		specular3 = vec3(0.0, 0.0, 0.0);
+	 	diffuse3 = vec3(0.0, 0.0, 0.0);
+	 	specular3 = vec3(0.0, 0.0, 0.0);
     }
     
     float lightReduction = 1.0 / (0.2 + 0.3*length(Lvec) + 0.4*pow(length(Lvec), 2.0));
@@ -102,8 +102,8 @@ void main()
     // part H: Texture specular - shifted specular value from color.rgb to gl_FragColor
     // color.rgb = globalAmbient  + ((ambient + diffuse) / lightReduction);
     
-    color.rgb = globalAmbient  + ((ambient + diffuse) * lightReduction) + ambient2 + diffuse2 + ((ambient3 + diffuse3) * lightReduction);
+    color.rgb = globalAmbient  + ambient + (diffuse * lightReduction) + ambient2 + diffuse2 + ambient3 + (diffuse3 * lightReduction);
     color.a = 1.0;
 
-    gl_FragColor = color * texture2D(texture, texCoord * 2.0) + vec4((specular * lightReduction) + specular2 + (specular3 * lightReduction), 1.0);
+    gl_FragColor = (color * texture2D(texture, texCoord * 2.0) + vec4((specular * lightReduction) + specular2 + (specular3 * lightReduction), 1.0));
 }
