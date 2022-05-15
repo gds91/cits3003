@@ -447,7 +447,7 @@ void init(void)
 
     // Part J: sphere for third light
     addObject(55);
-    sceneObjs[3].loc = vec4(0.0, 1.0, 1.0, 1.0); // second light needs to be in a different location
+    sceneObjs[3].loc = vec4(0.0, 1.0, 1.0, 1.0);
     sceneObjs[3].scale = 0.1;
     sceneObjs[3].texId = 0;        // Plain texture
     sceneObjs[3].brightness = 0.2; // The light's brightness is 5 times this (below).
@@ -532,14 +532,14 @@ void display(void)
 
     // Part I: second light
     SceneObject lightObj2 = sceneObjs[2];
-    vec4 lightPosition2 = xyRotate * lightObj2.loc; // rotate instead of view
+    vec4 lightPosition2 = view * (lightObj2.loc - vec4(0.0, 0.0, 0.0, 1.0)); // rotate instead of view
 
     // Part J: spotlight
     SceneObject lightObj3 = sceneObjs[3];
     vec4 lightPosition3 = view * lightObj3.loc;
     vec4 lightRotation3 = view * RotateZ(sceneObjs[3].angles[2]) *
                           RotateY(sceneObjs[3].angles[1]) *
-                          RotateX(sceneObjs[3].angles[0]) * vec4(0.0, 1.0, 0.0, 0.0);
+                          RotateX(sceneObjs[3].angles[0]) * vec4(0.0, -1.0, 0.0, 0.0);
 
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightPosition"),
                  1, lightPosition);
@@ -555,9 +555,6 @@ void display(void)
                  1, lightPosition3);
     CheckError();
 
-    glUniform1f(glGetUniformLocation(shaderProgram, "SpotlightSize"),
-                spotlightSize);
-    CheckError();
     glUniform4fv(glGetUniformLocation(shaderProgram, "LightRotation3"),
                  1, lightRotation3);
     CheckError();
@@ -565,14 +562,30 @@ void display(void)
     for (int i = 0; i < nObjects; i++)
     {
         SceneObject so = sceneObjs[i];
-        // part H: Object specular - added rgbSpec variable excludes sceneObj's rgb values
+
         vec3 rgbSpec = lightObj1.rgb * so.brightness * lightObj1.brightness * 2.0;
         vec3 rgb = so.rgb * rgbSpec;
+        // part H: Object specular - added rguniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct,
         glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct"), 1, so.ambient * rgb);
         CheckError();
         glUniform3fv(glGetUniformLocation(shaderProgram, "DiffuseProduct"), 1, so.diffuse * rgb);
         glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgbSpec);
-        glUniform1f(glGetUniformLocation(shaderProgram, "Shininess"), so.shine);
+        CheckError();
+
+        vec3 rgbSpec2 = lightObj2.rgb * so.brightness * lightObj2.brightness * 2.0;
+        vec3 rgb2 = so.rgb * rgbSpec2;
+        glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct2"), 1, so.ambient * rgb2);
+        CheckError();
+        glUniform3fv(glGetUniformLocation(shaderProgram, "DiffuseProduct2"), 1, so.diffuse * rgb2);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct2"), 1, so.specular * rgbSpec2);
+        CheckError();
+
+        vec3 rgbSpec3 = lightObj3.rgb * so.brightness * lightObj3.brightness * 2.0;
+        vec3 rgb3 = so.rgb * rgbSpec3;
+        glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct3"), 1, so.ambient * rgb3);
+        CheckError();
+        glUniform3fv(glGetUniformLocation(shaderProgram, "DiffuseProduct3"), 1, so.diffuse * rgb3);
+        glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct3"), 1, so.specular * rgbSpec3);
         CheckError();
 
         drawMesh(sceneObjs[i]);
@@ -647,10 +660,6 @@ static void lightMenu(int id)
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
     }
-    else if (id == 79)
-    {
-        setToolCallbacks(rotateLight, mat2(1, 1, 0, 1), rotateLight, mat2(1, 1, 0, 1));
-    }
     else if (id == 80)
     { // for moving light2
         toolObj = 2;
@@ -662,6 +671,12 @@ static void lightMenu(int id)
         toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
+    }
+    else if (id == 85)
+    { // for rotating spotlight
+        toolObj = 3;
+        setToolCallbacks(rotateLight, mat2(-400, 0, 0, -200),
+                         adjustBrightnessY, mat2(1.0, 0, 0, -1.0));
     }
     else if (id == 85)
     { // for adjusting spotlight
