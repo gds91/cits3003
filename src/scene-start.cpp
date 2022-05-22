@@ -342,7 +342,8 @@ static void addObject(int id)
 // Part J - Object deletion and duplication functions
 static void duplicateObject()
 {
-    cout << currObject << endl;
+    // Uncomment the line below to print out object id
+    // cout << currObject << endl;
     if (nObjects == maxObjects)
     {
         return;
@@ -365,7 +366,8 @@ static void duplicateObject()
 
 static void deleteObject()
 {
-    cout << currObject << endl;
+    // Uncomment the line below to print out object id
+    // cout << currObject << endl;
     // ignore ground and light objects
     if (currObject <= 3)
     {
