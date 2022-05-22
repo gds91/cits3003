@@ -81,7 +81,7 @@ int toolObj = -1;                  // The object currently being modified
 
 // Shader selection. Set as 1 for parts A-F, 2 for parts G-H,
 // and any other number to enable selection in terminal
-int shaderNum = 2;
+int shaderNum = -1;
 
 // Part J: specify spotlight size
 float spotlightSize = -1.0;
@@ -678,12 +678,6 @@ static void lightMenu(int id)
         setToolCallbacks(rotateLight, mat2(-400, 0, 0, -200),
                          adjustBrightnessY, mat2(1.0, 0, 0, -1.0));
     }
-    else if (id == 85)
-    { // for adjusting spotlight
-        toolObj = 3;
-        setToolCallbacks(rotateLight, mat2(-400, 0, 0, -200),
-                         adjustBrightnessY, mat2(1.0, 0, 0, -1.0));
-    }
     else
     {
         printf("Error in lightMenu\n");
@@ -730,6 +724,7 @@ static void materialMenu(int id)
     // Part C
     else if (id == 20)
     {
+        toolObj = currObject;
         setToolCallbacks(adjustAmbientDiffuse, mat2(1, 0, 0, 1),
                          adjustSpecularShine, mat2(1, 1, 0, 1));
     }
@@ -953,7 +948,7 @@ void shaderSelect()
             continue;
         }
     }
-    cout << "\nShader set chosen: " << shaderNum;
+    cout << "Shader set chosen: " << shaderNum << "\n\n";
 }
 
 //----------------------------------------------------------------------------

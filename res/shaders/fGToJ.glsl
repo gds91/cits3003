@@ -97,10 +97,6 @@ void main()
     }
     
     float lightReduction = 1.0 / (0.2 + 0.3*length(Lvec) + 0.4*pow(length(Lvec), 2.0));
-    // color.rgb = globalAmbient  + ambient + diffuse + specular;
-    // color.rgb = globalAmbient  + ((ambient + diffuse + specular) / lightReduction);
-    // part H: Texture specular - shifted specular value from color.rgb to gl_FragColor
-    // color.rgb = globalAmbient  + ((ambient + diffuse) / lightReduction);
     
     color.rgb = globalAmbient  + ambient + (diffuse * lightReduction) + ambient2 + diffuse2 + ambient3 + (diffuse3 * lightReduction);
     color.a = 1.0;
