@@ -534,7 +534,7 @@ void display(void)
 
     // Part I: second light
     SceneObject lightObj2 = sceneObjs[2];
-    vec4 lightPosition2 = view * (lightObj2.loc - vec4(0.0, 0.0, 0.0, 1.0)); // rotate instead of view
+    vec4 lightPosition2 = xyRotate * (lightObj2.loc - vec4(0.0, 0.0, 0.0, 1.0));
 
     // Part J: spotlight
     SceneObject lightObj3 = sceneObjs[3];
@@ -574,6 +574,7 @@ void display(void)
         glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct"), 1, so.specular * rgbSpec);
         CheckError();
 
+        // Part I: Second light
         vec3 rgbSpec2 = lightObj2.rgb * so.brightness * lightObj2.brightness * 2.0;
         vec3 rgb2 = so.rgb * rgbSpec2;
         glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct2"), 1, so.ambient * rgb2);
@@ -582,6 +583,7 @@ void display(void)
         glUniform3fv(glGetUniformLocation(shaderProgram, "SpecularProduct2"), 1, so.specular * rgbSpec2);
         CheckError();
 
+        // Part J: Spotlight
         vec3 rgbSpec3 = lightObj3.rgb * so.brightness * lightObj3.brightness * 2.0;
         vec3 rgb3 = so.rgb * rgbSpec3;
         glUniform3fv(glGetUniformLocation(shaderProgram, "AmbientProduct3"), 1, so.ambient * rgb3);
@@ -663,19 +665,19 @@ static void lightMenu(int id)
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
     }
     else if (id == 80)
-    { // for moving light2
+    { // Part I: For moving light 2
         toolObj = 2;
         setToolCallbacks(adjustLocXZ, camRotZ(),
                          adjustBrightnessY, mat2(1.0, 0.0, 0.0, 10.0));
     }
     else if (id >= 81 && id <= 84)
-    { // for adjusting the RGB values for light2
+    { // Part I: For adjusting the RGB values for light 2
         toolObj = 2;
         setToolCallbacks(adjustRedGreen, mat2(1.0, 0, 0, 1.0),
                          adjustBlueBrightness, mat2(1.0, 0, 0, 1.0));
     }
     else if (id == 85)
-    { // for rotating spotlight
+    { // Part J: For rotating spotlight
         toolObj = 3;
         setToolCallbacks(rotateLight, mat2(-400, 0, 0, -200),
                          adjustBrightnessY, mat2(1.0, 0, 0, -1.0));
@@ -790,6 +792,7 @@ static void makeMenu()
     int texMenuId = createArrayMenu(numTextures, textureMenuEntries, texMenu);
     int groundMenuId = createArrayMenu(numTextures, textureMenuEntries, groundMenu);
 
+    // Part I and J: Add menu entries for interacting with light 2 and spotlight
     int lightMenuId = glutCreateMenu(lightMenu);
     glutAddMenuEntry("Move Light 1", 70);
     glutAddMenuEntry("R/G/B/All Light 1", 71);

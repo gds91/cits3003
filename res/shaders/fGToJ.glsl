@@ -1,3 +1,4 @@
+
 #version 150
 
 in vec2 texCoord;
@@ -9,7 +10,7 @@ out vec4 fColor;
 
 uniform sampler2D texture;
 
-// Naomi: Part G: moved vertex shader variables to fragment shader for per-fragment lighting
+// Part G: moved vertex shader variables to fragment shader for per-fragment lighting
 uniform vec3 AmbientProduct, DiffuseProduct, SpecularProduct, AmbientProduct2, DiffuseProduct2, SpecularProduct2, AmbientProduct3, DiffuseProduct3, SpecularProduct3;
 uniform mat4 ModelView;
 uniform mat4 Projection;
@@ -18,16 +19,16 @@ uniform float Shininess;
 //First light source
 uniform vec4 LightPosition;
 
-//Part I: second light source
+//Part I: Second light source
 uniform vec4 LightPosition2;
 
-//Part J: spotlight
+//Part J: Spotlight
 uniform vec4 LightPosition3;
 float SpotlightSize = radians(180) /5;
 uniform vec4 LightRotation3;
 
 
-//Part G: copied main from vertex shader to fragment shader
+//Part G: moved lighting calculations from vertex shader to fragment shader
 void main()
 {
     vec3 pos = (ModelView * position).xyz;
@@ -35,10 +36,11 @@ void main()
     // globalAmbient is independent of distance from the light source
     vec3 globalAmbient = vec3(0.1, 0.1, 0.1);
     
-    // The vector to the light from the vertex    
+    // The vector to the light from the vertex  
     vec3 Lvec = LightPosition.xyz - pos;
     // Part I: vector to the origin from light 2 
     vec3 Lvec2 = LightPosition2.xyz;
+    // Part J: vector to the spotlight from the vertex
     vec3 Lvec3 = LightPosition3.xyz - pos;
 
     // Unit direction vectors for Blinn-Phong shading calculation
@@ -46,7 +48,7 @@ void main()
     vec3 E = normalize( -pos );   // Direction to the eye/camera
     vec3 H = normalize( L + E );  // Halfway vector
 
-    vec3 L2 = normalize(Lvec2); //Direction 
+    vec3 L2 = normalize(Lvec2);
     vec3 H2 = normalize (L2);
 
     vec3 L3 = normalize(Lvec3);
@@ -77,7 +79,7 @@ void main()
     float Ks3 = pow( max(dot(N, H3), 0.0), Shininess );
     vec3  specular3 = Ks3 * SpecularProduct3;
     
-    //If light is behind vertex then discard specular highlight
+    // If light is behind vertex then discard specular highlight
     if (dot(L, N) < 0.0 ) {
 	specular = vec3(0.0, 0.0, 0.0);
     } 
@@ -88,7 +90,7 @@ void main()
 	specular3 = vec3(0.0, 0.0, 0.0);
     } 
 
-    //Part J: spotlight 
+    //Part J: Do not illuminate if outside spotlight cone
     float spotlightTheta = dot(L3, normalize(-LightRotation3.xyz));
     if(spotlightTheta < SpotlightSize){
         ambient3 = vec3(0.0, 0.0, 0.0);
